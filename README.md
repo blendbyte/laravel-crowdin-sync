@@ -49,6 +49,11 @@ return [
 
 ```php
 LaravelCrowdinSync::make()->syncFiles(['resources/lang/' => 'laravel']);
+LaravelCrowdinSync::make()->uploadFiles(['resources/lang/' => 'laravel']);
+LaravelCrowdinSync::make()->downloadFiles(['resources/lang/' => 'laravel']);
+LaravelCrowdinSync::make()->syncContent(\App\Models\Page::class);
+LaravelCrowdinSync::make()->uploadContent(\App\Models\Page::class);
+LaravelCrowdinSync::make()->downloadContent(\App\Models\Page::class);
 ```
 
 ## Testing
