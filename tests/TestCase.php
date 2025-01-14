@@ -2,9 +2,9 @@
 
 namespace Blendbyte\LaravelCrowdinSync\Tests;
 
+use Blendbyte\LaravelCrowdinSync\LaravelCrowdinSyncServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Orchestra\Testbench\TestCase as Orchestra;
-use Blendbyte\LaravelCrowdinSync\LaravelCrowdinSyncServiceProvider;
 
 class TestCase extends Orchestra
 {
