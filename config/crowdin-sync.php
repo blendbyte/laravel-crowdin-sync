@@ -6,10 +6,10 @@ return [
     'api_key' => env('CROWDIN_API_KEY'),
 
     // Project ID for Translation Files (must be "File-based project")
-    'project_id_files' => env('CROWDIN_PROJECT_ID_FILES'),
+    'project_id_files' => env('CROWDIN_PROJECT_ID_FILES', -1),
 
     // Project ID for Content Translations (must be "String-based project")
-    'project_id_content' => env('CROWDIN_PROJECT_ID_CONTENT'),
+    'project_id_content' => env('CROWDIN_PROJECT_ID_CONTENT', -1),
 
     // File Update Option, choose one of clear_translations_and_approvals, keep_translations, keep_translations_and_approvals
     'file_update_options' => env('CROWDIN_FILE_UPDATE_OPTIONS', 'clear_translations_and_approvals'),
