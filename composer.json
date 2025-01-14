@@ -1,17 +1,17 @@
 {
-    "name": ":vendor_slug/:package_slug",
-    "description": ":package_description",
+    "name": "blendbyte/laravel-crowdin-sync",
+    "description": "Syncs Translation Data from Laravel to a Crowdin project and back.",
     "keywords": [
-        ":vendor_name",
+        "Blendbyte Inc.",
         "laravel",
-        ":package_slug"
+        "laravel-crowdin-sync"
     ],
-    "homepage": "https://github.com/:vendor_slug/:package_slug",
+    "homepage": "https://github.com/blendbyte/laravel-crowdin-sync",
     "license": "MIT",
     "authors": [
         {
-            "name": ":author_name",
-            "email": "author@domain.com",
+            "name": "Blendbyte Inc.",
+            "email": "info@blendbyte.com",
             "role": "Developer"
         }
     ],
@@ -35,13 +35,13 @@
     },
     "autoload": {
         "psr-4": {
-            "VendorName\\Skeleton\\": "src/",
-            "VendorName\\Skeleton\\Database\\Factories\\": "database/factories/"
+            "Blendbyte\\LaravelCrowdinSync\\": "src/",
+            "Blendbyte\\LaravelCrowdinSync\\Database\\Factories\\": "database/factories/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "VendorName\\Skeleton\\Tests\\": "tests/",
+            "Blendbyte\\LaravelCrowdinSync\\Tests\\": "tests/",
             "Workbench\\App\\": "workbench/app/"
         }
     },
@@ -63,10 +63,10 @@
     "extra": {
         "laravel": {
             "providers": [
-                "VendorName\\Skeleton\\SkeletonServiceProvider"
+                "Blendbyte\\LaravelCrowdinSync\\LaravelCrowdinSyncServiceProvider"
             ],
             "aliases": {
-                "Skeleton": "VendorName\\Skeleton\\Facades\\Skeleton"
+                "LaravelCrowdinSync": "Blendbyte\\LaravelCrowdinSync\\Facades\\LaravelCrowdinSync"
             }
         }
     },
