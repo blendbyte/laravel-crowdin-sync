@@ -333,7 +333,7 @@ class LaravelCrowdinSync
 
         return [
             'name' => $model_name ?? (new \ReflectionClass($eloquent_model))->getShortName(),
-            'id_field' => (new $eloquent_model)()->getKeyName(),
+            'id_field' => (new $eloquent_model)->getKeyName(),
             'fields' => $fields,
         ];
     }
