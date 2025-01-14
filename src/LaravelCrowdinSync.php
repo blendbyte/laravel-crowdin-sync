@@ -44,18 +44,18 @@ class LaravelCrowdinSync
         $this->client = new \CrowdinApiClient\Crowdin(['access_token' => $this->api_key]);
     }
 
-    public function syncFiles(array $folders): self
+    public function syncFiles(string $source_path, string $crowdin_path, array $include_file_names=[]): self
     {
-        $this->uploadFiles($folders);
-        $this->downloadFiles($folders);
+        $this->uploadFiles($source_path, $crowdin_path, $include_file_names);
+        $this->downloadFiles($source_path, $crowdin_path, $include_file_names);
 
         return $this;
     }
 
-    public function uploadFiles(array $folders): self
+    public function uploadFiles(string $source_path, string $crowdin_path, array $include_file_names=[]): self
     {
         $this->prepareFileHandling();
-        $sources = $this->prepareFiletree($folders);
+        $sources = $this->prepareFiletree($source_path, $crowdin_path, $include_file_names);
 
         foreach ($sources as $source) {
             $path = $this->splitPath($source['target']);
@@ -99,10 +99,10 @@ class LaravelCrowdinSync
         return $this;
     }
 
-    public function downloadFiles(array $folders): self
+    public function downloadFiles(string $source_path, string $crowdin_path, array $include_file_names=[]): self
     {
         $this->prepareFileHandling();
-        $sources = $this->prepareFiletree($folders);
+        $sources = $this->prepareFiletree($source_path, $crowdin_path, $include_file_names);
 
         foreach ($sources as $source) {
             $path = $this->splitPath($source['target']);
@@ -269,27 +269,30 @@ class LaravelCrowdinSync
         return $directory;
     }
 
-    private function prepareFiletree(array $folders): array
+    private function prepareFiletree(string $source_path, string $crowdin_path, array $include_file_names=[]): array
     {
         $filetree = [];
-        foreach ($folders as $source => $target) {
-            $fs_path = base_path(rtrim($source, '/').'/'.$this->files_source_language_id.'/');
-            foreach (scandir($fs_path) as $file) {
-                if ($file === '.' || $file === '..') {
-                    continue;
-                }
-                $content = file_get_contents($fs_path.$file);
-
-                // replace placeholders with crowdin type
-                $content = preg_replace('/\:((\w){1,})\b/U', '{{$1}}', $content);
-
-                $filetree[] = [
-                    'source_path' => base_path(rtrim($source, '/').'/'),
-                    'source_file' => $file,
-                    'target' => rtrim($target, '/').'/'.$file,
-                    'content' => $content,
-                ];
+        $fs_path = base_path(rtrim($source_path, '/').'/'.$this->files_source_language_id.'/');
+        foreach (scandir($fs_path) as $file) {
+            if ($file === '.' || $file === '..') {
+                continue;
             }
+
+            // only include certain files
+            if (isset($include_file_names) && count($include_file_names) > 0 && !in_array($file, $include_file_names, true)) {
+                continue;
+            }
+
+            // get content and replace placeholders with crowdin type
+            $content = file_get_contents($fs_path.$file);
+            $content = preg_replace('/\:((\w){1,})\b/U', '{{$1}}', $content);
+
+            $filetree[] = [
+                'source_path' => base_path(rtrim($source_path, '/').'/'),
+                'source_file' => $file,
+                'target' => rtrim($crowdin_path, '/').'/'.$file,
+                'content' => $content,
+            ];
         }
 
         return $filetree;
