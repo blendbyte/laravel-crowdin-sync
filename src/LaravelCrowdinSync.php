@@ -44,7 +44,7 @@ class LaravelCrowdinSync
         $this->client = new \CrowdinApiClient\Crowdin(['access_token' => $this->api_key]);
     }
 
-    public function syncFiles(string $source_path, string $crowdin_path, array $include_file_names=[]): self
+    public function syncFiles(string $source_path, string $crowdin_path, array $include_file_names = []): self
     {
         $this->uploadFiles($source_path, $crowdin_path, $include_file_names);
         $this->downloadFiles($source_path, $crowdin_path, $include_file_names);
@@ -52,7 +52,7 @@ class LaravelCrowdinSync
         return $this;
     }
 
-    public function uploadFiles(string $source_path, string $crowdin_path, array $include_file_names=[]): self
+    public function uploadFiles(string $source_path, string $crowdin_path, array $include_file_names = []): self
     {
         $this->prepareFileHandling();
         $sources = $this->prepareFiletree($source_path, $crowdin_path, $include_file_names);
@@ -99,7 +99,7 @@ class LaravelCrowdinSync
         return $this;
     }
 
-    public function downloadFiles(string $source_path, string $crowdin_path, array $include_file_names=[]): self
+    public function downloadFiles(string $source_path, string $crowdin_path, array $include_file_names = []): self
     {
         $this->prepareFileHandling();
         $sources = $this->prepareFiletree($source_path, $crowdin_path, $include_file_names);
@@ -269,7 +269,7 @@ class LaravelCrowdinSync
         return $directory;
     }
 
-    private function prepareFiletree(string $source_path, string $crowdin_path, array $include_file_names=[]): array
+    private function prepareFiletree(string $source_path, string $crowdin_path, array $include_file_names = []): array
     {
         $filetree = [];
         $fs_path = base_path(rtrim($source_path, '/').'/'.$this->files_source_language_id.'/');
@@ -279,7 +279,7 @@ class LaravelCrowdinSync
             }
 
             // only include certain files
-            if (isset($include_file_names) && count($include_file_names) > 0 && !in_array($file, $include_file_names, true)) {
+            if (isset($include_file_names) && count($include_file_names) > 0 && ! in_array($file, $include_file_names, true)) {
                 continue;
             }
 
