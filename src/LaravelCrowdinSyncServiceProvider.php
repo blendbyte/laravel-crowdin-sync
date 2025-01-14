@@ -11,6 +11,6 @@ class LaravelCrowdinSyncServiceProvider extends PackageServiceProvider
     {
         $package
             ->name('laravel-crowdin-sync')
-            ->hasConfigFile();
+            ->hasConfigFile('crowdin-sync');
     }
 }
