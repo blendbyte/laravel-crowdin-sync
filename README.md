@@ -48,7 +48,7 @@ return [
 ## Usage
 
 ```php
-
+LaravelCrowdinSync::make()->syncFiles(['resources/lang/' => 'laravel']);
 ```
 
 ## Testing
