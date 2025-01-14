@@ -328,7 +328,7 @@ class LaravelCrowdinSync
         }
 
         if (count($fields) === 0) {
-            $fields = (new $eloquent_model)()->getTranslatableAttributes();
+            $fields = (new $eloquent_model)->getTranslatableAttributes();
         }
 
         return [
