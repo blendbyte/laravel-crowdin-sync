@@ -279,7 +279,7 @@ class LaravelCrowdinSync
             }
 
             // only include certain files
-            if (isset($include_file_names) && count($include_file_names) > 0 && ! in_array($file, $include_file_names, true)) {
+            if (count($include_file_names) > 0 && ! in_array($file, $include_file_names, true)) {
                 continue;
             }
 
