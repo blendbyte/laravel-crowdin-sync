@@ -308,7 +308,7 @@ class LaravelCrowdinSync
         if (! isset($this->files_source_language_id, $this->files_target_language_ids)) {
             $project = $this->client->project->get($this->project_id_files);
             $this->files_source_language_id = $project?->getSourceLanguageId();
-            $this->files_target_language_ids = array_map(static fn($language) => explode('-', $language, 2)[0], $project?->getTargetLanguageIds());
+            $this->files_target_language_ids = array_map(static fn ($language) => explode('-', $language, 2)[0], $project?->getTargetLanguageIds());
         }
 
         if (! isset($this->directories)) {
