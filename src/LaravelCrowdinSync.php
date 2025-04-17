@@ -133,6 +133,11 @@ class LaravelCrowdinSync
                 }
                 $content = implode("\n", $back);
 
+                // Make sure directory exists
+                if (!is_dir($source['source_path'].$language)) {
+                    mkdir($source['source_path'].$language);
+                }
+
                 file_put_contents($source['source_path'].$language.'/'.$source['source_file'], $content);
             }
         }
