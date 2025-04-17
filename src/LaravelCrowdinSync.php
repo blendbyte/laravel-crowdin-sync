@@ -134,11 +134,12 @@ class LaravelCrowdinSync
                 $content = implode("\n", $back);
 
                 // Make sure directory exists
-                if (! is_dir($source['source_path'].$language)) {
-                    mkdir($source['source_path'].$language);
+                $language_folder = explode('-', $language, 2)[0];
+                if (! is_dir($source['source_path'].$language_folder)) {
+                    mkdir($source['source_path'].$language_folder);
                 }
 
-                file_put_contents($source['source_path'].$language.'/'.$source['source_file'], $content);
+                file_put_contents($source['source_path'].$language_folder.'/'.$source['source_file'], $content);
             }
         }
 
@@ -308,7 +309,7 @@ class LaravelCrowdinSync
         if (! isset($this->files_source_language_id, $this->files_target_language_ids)) {
             $project = $this->client->project->get($this->project_id_files);
             $this->files_source_language_id = $project?->getSourceLanguageId();
-            $this->files_target_language_ids = array_map(static fn($language) => explode('-', $language, 2)[0], $project?->getTargetLanguageIds());
+            $this->files_target_language_ids = $project?->getTargetLanguageIds();
         }
 
         if (! isset($this->directories)) {
