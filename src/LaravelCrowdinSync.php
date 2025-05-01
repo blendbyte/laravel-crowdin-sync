@@ -13,15 +13,25 @@ use Illuminate\Support\Facades\Http;
 class LaravelCrowdinSync
 {
     public int $project_id_files;
+
     public int $project_id_content;
+
     public string $api_key;
+
     public Crowdin $client;
+
     public ModelCollection $directories;
+
     public ModelCollection $files;
+
     public string $files_source_language_id;
+
     public array $files_target_language_ids;
+
     public int $content_branch_id;
+
     public string $content_source_language_id;
+
     public array $content_target_language_ids;
 
     public static function make(): LaravelCrowdinSync
@@ -46,6 +56,7 @@ class LaravelCrowdinSync
 
         return $this;
     }
+
     public function uploadFiles(string $source_path, string $crowdin_path, array $include_file_names = []): self
     {
         $this->prepareFileHandling();
@@ -96,6 +107,7 @@ class LaravelCrowdinSync
 
         return $this;
     }
+
     public function downloadFiles(string $source_path, string $crowdin_path, array $include_file_names = []): self
     {
         $this->prepareFileHandling();
@@ -148,6 +160,7 @@ class LaravelCrowdinSync
 
         return $this;
     }
+
     private function splitPath(string $path): array
     {
         $spl = explode('/', $path);
@@ -157,6 +170,7 @@ class LaravelCrowdinSync
             'path' => implode('/', $spl),
         ];
     }
+
     private function findFileInDirectory(string $file_path, int $directory_id): ?File
     {
         foreach ($this->files as $file) {
@@ -167,6 +181,7 @@ class LaravelCrowdinSync
 
         return null;
     }
+
     private function findOrCreateDirectory(string $path): int
     {
         foreach ($this->directories as $dir) {
@@ -182,6 +197,7 @@ class LaravelCrowdinSync
 
         return $directory;
     }
+
     private function prepareFiletree(string $source_path, string $crowdin_path, array $include_file_names = []): array
     {
         $filetree = [];
@@ -210,6 +226,7 @@ class LaravelCrowdinSync
 
         return $filetree;
     }
+
     private function prepareFileHandling(): void
     {
         if (! isset($this->files_source_language_id, $this->files_target_language_ids)) {
@@ -229,19 +246,20 @@ class LaravelCrowdinSync
     // -- FILES
 
     // CONTENT
-    public function syncContent(string $name, string $eloquent_model, ?array $fields=null, ?callable $context=null): self
+    public function syncContent(string $name, string $eloquent_model, ?array $fields = null, ?callable $context = null): self
     {
         $this->uploadContent($name, $eloquent_model, $fields, $context);
         $this->downloadContent($name, $eloquent_model, $fields);
 
         return $this;
     }
-    public function uploadContent(string $name, string $eloquent_model, ?array $fields=null, ?callable $context=null): self
+
+    public function uploadContent(string $name, string $eloquent_model, ?array $fields = null, ?callable $context = null): self
     {
         $this->prepareContentHandling($eloquent_model);
 
         /** @var Model $eloquent_model */
-        $eloquent_model::chunk(100, function(Collection $rows) use ($name, $fields, $context) {
+        $eloquent_model::chunk(100, function (Collection $rows) use ($name, $fields, $context) {
             foreach ($rows as $row) {
                 $context = (is_callable($context) ? $context($row) : '') ?? '';
 
@@ -271,6 +289,7 @@ class LaravelCrowdinSync
                                 if (config('crowdin-sync.debug')) {
                                     echo "No update required for $identifier (unchanged)\n";
                                 }
+
                                 continue;
                             }
 
@@ -307,12 +326,13 @@ class LaravelCrowdinSync
 
         return $this;
     }
-    public function downloadContent(string $name, string $eloquent_model, ?array $fields=null, ?callable $context=null): self
+
+    public function downloadContent(string $name, string $eloquent_model, ?array $fields = null, ?callable $context = null): self
     {
         $this->prepareContentHandling($eloquent_model);
 
         /** @var Model $eloquent_model */
-        $eloquent_model::chunk(100, function(Collection $rows) use ($name, $fields) {
+        $eloquent_model::chunk(100, function (Collection $rows) use ($name, $fields) {
             foreach ($rows as $row) {
                 foreach ($fields as $field_key => $field) {
                     if (is_array($field)) {
@@ -346,6 +366,7 @@ class LaravelCrowdinSync
                                 if (config('crowdin-sync.debug')) {
                                     echo "Skipping $language translation for $identifier (no approved translation)\n";
                                 }
+
                                 continue;
                             }
 
@@ -360,15 +381,17 @@ class LaravelCrowdinSync
                                 if (config('crowdin-sync.debug')) {
                                     echo "Skipping $language translation for $identifier (no translation)\n";
                                 }
+
                                 continue;
                             }
                             $translation = $translations[0];
                         }
 
-                        if (!$translation) {
+                        if (! $translation) {
                             if (config('crowdin-sync.debug')) {
                                 echo "Skipping $language translation for $identifier (invalid)\n";
                             }
+
                             continue;
                         }
 
@@ -392,6 +415,7 @@ class LaravelCrowdinSync
 
         return $this;
     }
+
     private function prepareContentHandling(string $eloquent_model): void
     {
         if (! isset($this->content_source_language_id, $this->content_target_language_ids)) {
