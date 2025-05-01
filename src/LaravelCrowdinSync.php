@@ -2,32 +2,26 @@
 
 namespace Blendbyte\LaravelCrowdinSync;
 
+use CrowdinApiClient\Crowdin;
 use CrowdinApiClient\Model\File;
+use CrowdinApiClient\Model\SourceString;
 use CrowdinApiClient\ModelCollection;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Http;
 
 class LaravelCrowdinSync
 {
     public int $project_id_files;
-
     public int $project_id_content;
-
     public string $api_key;
-
-    public \CrowdinApiClient\Crowdin $client;
-
+    public Crowdin $client;
     public ModelCollection $directories;
-
     public ModelCollection $files;
-
     public string $files_source_language_id;
-
     public array $files_target_language_ids;
-
     public int $content_branch_id;
-
     public string $content_source_language_id;
-
     public array $content_target_language_ids;
 
     public static function make(): LaravelCrowdinSync
@@ -41,9 +35,10 @@ class LaravelCrowdinSync
         $this->project_id_content = $project_id_content ?? config('crowdin-sync.project_id_content');
         $this->api_key = $api_key ?? config('crowdin-sync.api_key');
         $this->content_branch_id = config('crowdin-sync.content_branch_id', -1);
-        $this->client = new \CrowdinApiClient\Crowdin(['access_token' => $this->api_key]);
+        $this->client = new Crowdin(['access_token' => $this->api_key]);
     }
 
+    // FILES
     public function syncFiles(string $source_path, string $crowdin_path, array $include_file_names = []): self
     {
         $this->uploadFiles($source_path, $crowdin_path, $include_file_names);
@@ -51,7 +46,6 @@ class LaravelCrowdinSync
 
         return $this;
     }
-
     public function uploadFiles(string $source_path, string $crowdin_path, array $include_file_names = []): self
     {
         $this->prepareFileHandling();
@@ -61,6 +55,10 @@ class LaravelCrowdinSync
             $path = $this->splitPath($source['target']);
             $directory_id = $this->findOrCreateDirectory($path['path']);
             $file_id = $this->findFileInDirectory($path['file'], $directory_id)?->getId();
+
+            if (config('crowdin-sync.debug')) {
+                echo "Uploading file: {$path['path']}/{$path['file']}\n";
+            }
 
             // upload
             $storage_id = $this->client->apiRequest(
@@ -98,7 +96,6 @@ class LaravelCrowdinSync
 
         return $this;
     }
-
     public function downloadFiles(string $source_path, string $crowdin_path, array $include_file_names = []): self
     {
         $this->prepareFileHandling();
@@ -110,6 +107,10 @@ class LaravelCrowdinSync
             $file_id = $this->findFileInDirectory($path['file'], $directory_id)?->getId();
 
             foreach ($this->files_target_language_ids as $language) {
+                if (config('crowdin-sync.debug')) {
+                    echo "Downloading file: {$path['path']}/{$path['file']} in $language\n";
+                }
+
                 $download = $this->client->translation
                     ->buildProjectFileTranslation($this->project_id_files, $file_id, [
                         'targetLanguageId' => $language,
@@ -147,97 +148,6 @@ class LaravelCrowdinSync
 
         return $this;
     }
-
-    public function syncContent(string $eloquent_model, array $fields = [], ?string $model_name = null): self
-    {
-        $this->uploadContent($eloquent_model, $fields, $model_name);
-        $this->downloadContent($eloquent_model, $fields, $model_name);
-
-        return $this;
-    }
-
-    public function uploadContent(string $eloquent_model, array $fields = [], ?string $model_name = null): self
-    {
-        $this->prepareContentHandling();
-        $amodel = $this->aggregateContentModel($eloquent_model, $fields, $model_name);
-
-        foreach ($eloquent_model::all() as $model) {
-            foreach ($amodel['fields'] as $field) {
-                $identifier = $amodel['name'].'.'.$field.'['.$model->{$amodel['id_field']}.']';
-                $content = $model->getTranslation($field, $this->content_source_language_id);
-                if (! $content || is_array($content)) {
-                    continue;
-                }
-
-                $find_sourcestring = $this->client->sourceString
-                    ->list($this->project_id_content, [
-                        'filter' => $identifier,
-                        'scope' => 'identifier',
-                    ]);
-                if (count($find_sourcestring) > 0) {
-                    foreach ($find_sourcestring as $f) {
-                        if ($f->getText() === $content) {
-                            continue;
-                        }
-                        $f->setText($content);
-                        $this->client->sourceString->update($f);
-                    }
-                } else {
-                    $this->client->sourceString->create($this->project_id_content, [
-                        'branchId' => $this->content_branch_id,
-                        'identifier' => $identifier,
-                        'text' => $content,
-                    ]);
-                }
-            }
-        }
-
-        return $this;
-    }
-
-    public function downloadContent(string $eloquent_model, array $fields = [], ?string $model_name = null): self
-    {
-        $this->prepareContentHandling();
-        $amodel = $this->aggregateContentModel($eloquent_model, $fields, $model_name);
-
-        foreach ($eloquent_model::all() as $model) {
-            foreach ($amodel['fields'] as $field) {
-                $identifier = $amodel['name'].'.'.$field.'['.$model->{$amodel['id_field']}.']';
-
-                // Find string
-                $find_sourcestring = $this->client->sourceString
-                    ->list($this->project_id_content, [
-                        'filter' => $identifier,
-                        'scope' => 'identifier',
-                    ]);
-                if (count($find_sourcestring) !== 1) {
-                    continue;
-                }
-                $sourcestring_id = $find_sourcestring[0]->getId();
-
-                // Get translations
-                foreach ($this->content_target_language_ids as $language) {
-                    $translations = $this->client->stringTranslation
-                        ->list($this->project_id_content, [
-                            'stringId' => $sourcestring_id,
-                            'languageId' => $language,
-                            'orderBy' => 'rating',
-                        ]);
-                    if (count($translations) === 0) {
-                        continue;
-                    }
-                    $translation = $translations[0]->getText();
-
-                    $model->setTranslation($field, $language, $translation);
-                }
-            }
-
-            $model->save();
-        }
-
-        return $this;
-    }
-
     private function splitPath(string $path): array
     {
         $spl = explode('/', $path);
@@ -247,7 +157,6 @@ class LaravelCrowdinSync
             'path' => implode('/', $spl),
         ];
     }
-
     private function findFileInDirectory(string $file_path, int $directory_id): ?File
     {
         foreach ($this->files as $file) {
@@ -258,7 +167,6 @@ class LaravelCrowdinSync
 
         return null;
     }
-
     private function findOrCreateDirectory(string $path): int
     {
         foreach ($this->directories as $dir) {
@@ -274,7 +182,6 @@ class LaravelCrowdinSync
 
         return $directory;
     }
-
     private function prepareFiletree(string $source_path, string $crowdin_path, array $include_file_names = []): array
     {
         $filetree = [];
@@ -303,7 +210,6 @@ class LaravelCrowdinSync
 
         return $filetree;
     }
-
     private function prepareFileHandling(): void
     {
         if (! isset($this->files_source_language_id, $this->files_target_language_ids)) {
@@ -320,30 +226,189 @@ class LaravelCrowdinSync
             $this->files = $this->client->file->list($this->project_id_files);
         }
     }
+    // -- FILES
 
-    private function prepareContentHandling(): void
+    // CONTENT
+    public function syncContent(string $name, string $eloquent_model, ?array $fields=null, ?callable $context=null): self
     {
+        $this->uploadContent($name, $eloquent_model, $fields, $context);
+        $this->downloadContent($name, $eloquent_model, $fields);
+
+        return $this;
+    }
+    public function uploadContent(string $name, string $eloquent_model, ?array $fields=null, ?callable $context=null): self
+    {
+        $this->prepareContentHandling($eloquent_model);
+
+        /** @var Model $eloquent_model */
+        $eloquent_model::chunk(100, function(Collection $rows) use ($name, $fields, $context) {
+            foreach ($rows as $row) {
+                $context = (is_callable($context) ? $context($row) : '') ?? '';
+
+                foreach ($fields as $field_key => $field) {
+                    if (is_array($field)) {
+                        $field_modifier = $field['upload'];
+                        $field = $field_key;
+                    } else {
+                        $field_modifier = null;
+                    }
+
+                    $identifier = $name.'.'.$field.'['.$row->{$row->getKeyName()}.']';
+                    $source_content = $field_modifier ? $field_modifier($row->$field, $this->content_source_language_id) : $row->getTranslation($field, $this->content_source_language_id);
+                    if (!$source_content) {
+                        if (config('crowdin-sync.debug')) {
+                            echo "No update required for $identifier (empty)\n";
+                        }
+                        continue;
+                    }
+
+                    $find_sourcestring = $this->client->sourceString
+                        ->list($this->project_id_content, [
+                            'filter' => $identifier,
+                            'scope' => 'identifier',
+                        ]);
+                    if (count($find_sourcestring) > 0) {
+                        foreach ($find_sourcestring as $string) {
+                            if ($string->getText() === $source_content && $string->getContext() === $context) {
+                                // Didn't change
+                                if (config('crowdin-sync.debug')) {
+                                    echo "No update required for $identifier (unchanged)\n";
+                                }
+                                continue;
+                            }
+
+                            if (config('crowdin-sync.debug')) {
+                                echo "Updating string for $identifier (".mb_strlen($source_content)." characters)\n";
+                            }
+
+
+                            $string->setText($source_content);
+
+                            if ($context) {
+                                $string->setContext($context);
+                            }
+
+                            ray($string);
+
+                            $this->client->sourceString->update($string);
+                        }
+                    } else {
+                        if (config('crowdin-sync.debug')) {
+                            echo "Adding string for $identifier (".mb_strlen($source_content)." characters)\n";
+                        }
+
+                        $string = new SourceString([
+                            'branchId' => $this->content_branch_id,
+                            'identifier' => $identifier,
+                            'text' => $source_content,
+                        ]);
+                        if ($context) {
+                            $string->setContext($context);
+                        }
+                        $this->client->sourceString->create($this->project_id_content, $string->getData());
+                    }
+                }
+            }
+        });
+
+        return $this;
+    }
+    public function downloadContent(string $name, string $eloquent_model, ?array $fields=null, ?callable $context=null): self
+    {
+        $this->prepareContentHandling($eloquent_model);
+
+        /** @var Model $eloquent_model */
+        $eloquent_model::chunk(100, function(Collection $rows) use ($name, $fields) {
+            foreach ($rows as $row) {
+                foreach ($fields as $field_key => $field) {
+                    if (is_array($field)) {
+                        $field_modifier = $field['download'];
+                        $field = $field_key;
+                    } else {
+                        $field_modifier = null;
+                    }
+
+                    $identifier = $name.'.'.$field.'['.$row->{$row->getKeyName()}.']';
+
+                    // Find string
+                    $find_sourcestring = $this->client->sourceString
+                        ->list($this->project_id_content, [
+                            'filter' => $identifier,
+                            'scope' => 'identifier',
+                        ]);
+                    if (count($find_sourcestring) !== 1) {
+                        continue;
+                    }
+                    $sourcestring_id = $find_sourcestring[0]->getId();
+
+                    // Get translations
+                    foreach ($this->content_target_language_ids as $language) {
+                        if (config('crowdin-sync.content_approved_only')) {
+                            $approvals = $this->client->stringTranslation->listApprovals($this->project_id_content, [
+                                'stringId' => $sourcestring_id,
+                                'languageId' => $language,
+                            ]);
+                            if (count($approvals) === 0) {
+                                if (config('crowdin-sync.debug')) {
+                                    echo "Skipping $language translation for $identifier (no approved translation)\n";
+                                }
+                                continue;
+                            }
+
+                            $translation = $this->client->stringTranslation->get($this->project_id_content, $approvals[0]->getTranslationId());
+                        } else {
+                            $translations = $this->client->stringTranslation->list($this->project_id_content, [
+                                'stringId' => $sourcestring_id,
+                                'languageId' => $language,
+                                'orderBy' => 'rating',
+                            ]);
+                            if (count($translations) === 0) {
+                                if (config('crowdin-sync.debug')) {
+                                    echo "Skipping $language translation for $identifier (no translation)\n";
+                                }
+                                continue;
+                            }
+                            $translation = $translations[0];
+                        }
+
+                        if (!$translation) {
+                            if (config('crowdin-sync.debug')) {
+                                echo "Skipping $language translation for $identifier (invalid)\n";
+                            }
+                            continue;
+                        }
+
+                        $target_content = $translation->getText();
+
+                        if (config('crowdin-sync.debug')) {
+                            echo "Updating $language translation for $identifier (".mb_strlen(is_array($target_content) ? json_encode($target_content) : $target_content)." characters)\n";
+                        }
+
+                        if ($field_modifier) {
+                            $row->$field = $field_modifier($target_content, $language, $row->$field);
+                        } else {
+                            $row->setTranslation($field, $language, $target_content);
+                        }
+                    }
+                }
+
+                $row->save();
+            }
+        });
+
+        return $this;
+    }
+    private function prepareContentHandling(string $eloquent_model): void
+    {
+        if (! in_array('Spatie\Translatable\HasTranslations', class_uses($eloquent_model), true)) {
+            throw new \Exception("syncContent model needs to use Spatie\Translatable\HasTranslations");
+        }
+
         if (! isset($this->content_source_language_id, $this->content_target_language_ids)) {
             $project = $this->client->project->get($this->project_id_content);
             $this->content_source_language_id = $project?->getSourceLanguageId();
             $this->content_target_language_ids = $project?->getTargetLanguageIds();
         }
     }
-
-    private function aggregateContentModel(string $eloquent_model, array $fields = [], ?string $model_name = null): array
-    {
-        if (! in_array('Spatie\Translatable\HasTranslations', class_uses($eloquent_model), true)) {
-            throw new \Exception("syncContent model needs to use Spatie\Translatable\HasTranslations");
-        }
-
-        if (count($fields) === 0) {
-            $fields = (new $eloquent_model)->getTranslatableAttributes();
-        }
-
-        return [
-            'name' => $model_name ?? (new \ReflectionClass($eloquent_model))->getShortName(),
-            'id_field' => (new $eloquent_model)->getKeyName(),
-            'fields' => $fields,
-        ];
-    }
+    // -- CONTENT
 }

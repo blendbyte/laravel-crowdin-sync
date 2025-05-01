@@ -18,24 +18,29 @@ You can publish the config file with:
 php artisan vendor:publish --tag="crowdin-sync-config"
 ```
 
-This is the contents of the published config file:
+These are the contents of the published default config file:
 
 ```php
 return [
+    // Debug Output to STDOUT
+    'debug' => env('CROWDIN_DEBUG', false),
+
     // Crowdin Access Token for the API
     'api_key' => env('CROWDIN_API_KEY'),
 
-    // Project ID for Translation Files (must be "File-based project")
-    'project_id_files' => env('CROWDIN_PROJECT_ID_FILES'),
 
-    // Project ID for Content Translations (must be "String-based project")
-    'project_id_content' => env('CROWDIN_PROJECT_ID_CONTENT'),
+    // Project ID for Translation Files (must be "File-based project")
+    'project_id_files' => env('CROWDIN_PROJECT_ID_FILES', -1),
 
     // File Update Option, choose one of clear_translations_and_approvals, keep_translations, keep_translations_and_approvals
     'file_update_options' => env('CROWDIN_FILE_UPDATE_OPTIONS', 'clear_translations_and_approvals'),
 
     // Only export approved translations for translation files
     'file_export_approved_only' => env('CROWDIN_FILE_EXPORT_APPROVED_ONLY', true),
+
+
+    // Project ID for Content Translations (must be "String-based project")
+    'project_id_content' => env('CROWDIN_PROJECT_ID_CONTENT', -1),
 
     // Content branch ID
     'content_branch_id' => env('CROWDIN_CONTENT_BRANCH_ID', -1),
@@ -51,9 +56,11 @@ return [
 LaravelCrowdinSync::make()->syncFiles(source_path: 'lang/', crowdin_path: 'laravel/');
 LaravelCrowdinSync::make()->uploadFiles(source_path: 'lang/', crowdin_path: 'laravel/');
 LaravelCrowdinSync::make()->downloadFiles(source_path: 'lang/', crowdin_path: 'laravel/');
-LaravelCrowdinSync::make()->syncContent(\App\Models\Page::class);
-LaravelCrowdinSync::make()->uploadContent(\App\Models\Page::class);
-LaravelCrowdinSync::make()->downloadContent(\App\Models\Page::class);
+
+# refactoring this:
+# LaravelCrowdinSync::make()->syncContent(\App\Models\Page::class);
+# LaravelCrowdinSync::make()->uploadContent(\App\Models\Page::class);
+# LaravelCrowdinSync::make()->downloadContent(\App\Models\Page::class);
 ```
 
 ## Testing
