@@ -72,6 +72,5 @@
         }
     },
     "minimum-stability": "dev",
-    "prefer-stable": true,
-    "version": "v0.0.0"
+    "prefer-stable": true
 }
