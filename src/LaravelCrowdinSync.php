@@ -256,9 +256,6 @@ class LaravelCrowdinSync
                     $identifier = $name.'.'.$field.'['.$row->{$row->getKeyName()}.']';
                     $source_content = $field_modifier ? $field_modifier($row->$field, $this->content_source_language_id) : $row->getTranslation($field, $this->content_source_language_id);
                     if (!$source_content) {
-                        if (config('crowdin-sync.debug')) {
-                            echo "No update required for $identifier (empty)\n";
-                        }
                         continue;
                     }
 
@@ -287,8 +284,6 @@ class LaravelCrowdinSync
                             if ($context) {
                                 $string->setContext($context);
                             }
-
-                            ray($string);
 
                             $this->client->sourceString->update($string);
                         }
@@ -400,10 +395,6 @@ class LaravelCrowdinSync
     }
     private function prepareContentHandling(string $eloquent_model): void
     {
-        if (! in_array('Spatie\Translatable\HasTranslations', class_uses($eloquent_model), true)) {
-            throw new \Exception("syncContent model needs to use Spatie\Translatable\HasTranslations");
-        }
-
         if (! isset($this->content_source_language_id, $this->content_target_language_ids)) {
             $project = $this->client->project->get($this->project_id_content);
             $this->content_source_language_id = $project?->getSourceLanguageId();
