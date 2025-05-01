@@ -273,7 +273,7 @@ class LaravelCrowdinSync
 
                     $identifier = $name.'.'.$field.'['.$row->{$row->getKeyName()}.']';
                     $source_content = $field_modifier ? $field_modifier($row->$field, $this->content_source_language_id) : $row->getTranslation($field, $this->content_source_language_id);
-                    if (!$source_content) {
+                    if (! $source_content) {
                         continue;
                     }
 
