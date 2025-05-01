@@ -278,7 +278,6 @@ class LaravelCrowdinSync
                                 echo "Updating string for $identifier (".mb_strlen($source_content)." characters)\n";
                             }
 
-
                             $string->setText($source_content);
 
                             if ($context) {
