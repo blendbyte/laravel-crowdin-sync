@@ -8,7 +8,6 @@ return [
     // Crowdin Access Token for the API
     'api_key' => env('CROWDIN_API_KEY'),
 
-
     // Project ID for Translation Files (must be "File-based project")
     'project_id_files' => env('CROWDIN_PROJECT_ID_FILES', -1),
 
@@ -17,7 +16,6 @@ return [
 
     // Only export approved translations for translation files
     'file_export_approved_only' => env('CROWDIN_FILE_EXPORT_APPROVED_ONLY', true),
-
 
     // Project ID for Content Translations (must be "String-based project")
     'project_id_content' => env('CROWDIN_PROJECT_ID_CONTENT', -1),
