@@ -396,15 +396,16 @@ class LaravelCrowdinSync
                         }
 
                         $target_content = $translation->getText();
+                        $language_string = explode('-', $language, 2)[0];
 
                         if (config('crowdin-sync.debug')) {
-                            echo "Updating $language translation for $identifier (".mb_strlen(is_array($target_content) ? json_encode($target_content) : $target_content)." characters)\n";
+                            echo "Updating $language_string translation for $identifier (".mb_strlen(is_array($target_content) ? json_encode($target_content) : $target_content)." characters)\n";
                         }
 
                         if ($field_modifier) {
-                            $row->$field = $field_modifier($target_content, $language, $row->$field);
+                            $row->$field = $field_modifier($target_content, $language_string, $row->$field);
                         } else {
-                            $row->setTranslation($field, $language, $target_content);
+                            $row->setTranslation($field, $language_string, $target_content);
                         }
                     }
                 }
