@@ -357,6 +357,8 @@ class LaravelCrowdinSync
 
                     // Get translations
                     foreach ($this->content_target_language_ids as $language) {
+                        $language_string = explode('-', $language, 2)[0];
+
                         if (config('crowdin-sync.content_approved_only')) {
                             $approvals = $this->client->stringTranslation->listApprovals($this->project_id_content, [
                                 'stringId' => $sourcestring_id,
@@ -364,7 +366,7 @@ class LaravelCrowdinSync
                             ]);
                             if (count($approvals) === 0) {
                                 if (config('crowdin-sync.debug')) {
-                                    echo "Skipping $language translation for $identifier (no approved translation)\n";
+                                    echo "Skipping $language_string translation for $identifier (no approved translation)\n";
                                 }
 
                                 continue;
@@ -379,7 +381,7 @@ class LaravelCrowdinSync
                             ]);
                             if (count($translations) === 0) {
                                 if (config('crowdin-sync.debug')) {
-                                    echo "Skipping $language translation for $identifier (no translation)\n";
+                                    echo "Skipping $language_string translation for $identifier (no translation)\n";
                                 }
 
                                 continue;
@@ -396,7 +398,6 @@ class LaravelCrowdinSync
                         }
 
                         $target_content = $translation->getText();
-                        $language_string = explode('-', $language, 2)[0];
 
                         if (config('crowdin-sync.debug')) {
                             echo "Updating $language_string translation for $identifier (".mb_strlen(is_array($target_content) ? json_encode($target_content) : $target_content)." characters)\n";
