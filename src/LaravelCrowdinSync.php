@@ -358,6 +358,9 @@ class LaravelCrowdinSync
                     // Get translations
                     foreach ($this->content_target_language_ids as $language) {
                         $language_string = explode('-', $language, 2)[0];
+                        if ($language_string === 'sv') {
+                            $language_string = 'se';
+                        }
 
                         if (config('crowdin-sync.content_approved_only')) {
                             $approvals = $this->client->stringTranslation->listApprovals($this->project_id_content, [
