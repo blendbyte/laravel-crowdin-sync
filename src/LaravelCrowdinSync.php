@@ -118,7 +118,6 @@ class LaravelCrowdinSync
             $directory_id = $this->findOrCreateDirectory($path['path']);
             $file_id = $this->findFileInDirectory($path['file'], $directory_id)?->getId();
 
-
             foreach ($this->files_target_language_ids as $language) {
                 $language_folder = $this->getLanguageFromLocale($language);
 
@@ -150,7 +149,6 @@ class LaravelCrowdinSync
                 $content = implode("\n", $back);
 
                 // Make sure directory exists
-
                 if (! is_dir($source['source_path'].$language_folder)) {
                     mkdir($source['source_path'].$language_folder);
                 }
@@ -436,7 +434,7 @@ class LaravelCrowdinSync
         $language = explode('-', $locale, 2)[0];
 
         // Overrides
-        return match($language) {
+        return match ($language) {
             'sv' => 'se',
             default => $language,
         };
