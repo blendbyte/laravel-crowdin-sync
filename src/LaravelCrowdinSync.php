@@ -118,9 +118,12 @@ class LaravelCrowdinSync
             $directory_id = $this->findOrCreateDirectory($path['path']);
             $file_id = $this->findFileInDirectory($path['file'], $directory_id)?->getId();
 
+
             foreach ($this->files_target_language_ids as $language) {
+                $language_folder = $this->getLanguageFromLocale($language);
+
                 if (config('crowdin-sync.debug')) {
-                    echo "Downloading file: {$path['path']}/{$path['file']} in $language\n";
+                    echo "Downloading file: {$path['path']}/{$path['file']} in $language_folder\n";
                 }
 
                 $download = $this->client->translation
@@ -147,7 +150,7 @@ class LaravelCrowdinSync
                 $content = implode("\n", $back);
 
                 // Make sure directory exists
-                $language_folder = explode('-', $language, 2)[0];
+
                 if (! is_dir($source['source_path'].$language_folder)) {
                     mkdir($source['source_path'].$language_folder);
                 }
@@ -357,10 +360,7 @@ class LaravelCrowdinSync
 
                     // Get translations
                     foreach ($this->content_target_language_ids as $language) {
-                        $language_string = explode('-', $language, 2)[0];
-                        if ($language_string === 'sv') {
-                            $language_string = 'se';
-                        }
+                        $language_string = $this->getLanguageFromLocale($language);
 
                         if (config('crowdin-sync.content_approved_only')) {
                             $approvals = $this->client->stringTranslation->listApprovals($this->project_id_content, [
@@ -394,7 +394,7 @@ class LaravelCrowdinSync
 
                         if (! $translation) {
                             if (config('crowdin-sync.debug')) {
-                                echo "Skipping $language translation for $identifier (invalid)\n";
+                                echo "Skipping $language_string translation for $identifier (invalid)\n";
                             }
 
                             continue;
@@ -430,4 +430,15 @@ class LaravelCrowdinSync
         }
     }
     // -- CONTENT
+
+    private function getLanguageFromLocale(string $locale): string
+    {
+        $language = explode('-', $locale, 2)[0];
+
+        // Overrides
+        return match($language) {
+            'sv' => 'se',
+            default => $language,
+        };
+    }
 }
