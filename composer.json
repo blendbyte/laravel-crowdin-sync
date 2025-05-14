@@ -19,7 +19,8 @@
         "php": "^8.4",
         "crowdin/crowdin-api-client": "^1.15",
         "illuminate/contracts": "^11.0||^12.0",
-        "spatie/laravel-package-tools": "^1.16"
+        "spatie/laravel-package-tools": "^1.16",
+        "spatie/laravel-translatable": "^6.0"
     },
     "require-dev": {
         "laravel/pint": "^1.14",
