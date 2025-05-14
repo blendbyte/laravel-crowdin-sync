@@ -273,6 +273,7 @@ class LaravelCrowdinSync
                     }
 
                     $identifier = $name.'.'.$field.'['.$row->{$row->getKeyName()}.']';
+                    // @phpstan-ignore-next-line
                     $source_content = $field_modifier ? $field_modifier($row->$field, $this->content_source_language_id) : $row->getTranslation($field, $this->content_source_language_id);
                     if (! $source_content) {
                         continue;
@@ -407,6 +408,7 @@ class LaravelCrowdinSync
                         if ($field_modifier) {
                             $row->$field = $field_modifier($target_content, $language_string, $row->$field);
                         } else {
+                            // @phpstan-ignore-next-line
                             $row->setTranslation($field, $language_string, $target_content);
                         }
                     }
